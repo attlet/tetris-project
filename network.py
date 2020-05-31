@@ -1,3 +1,9 @@
+
+#2017038015 신윤성
+#두 명의 클라이언트가 서로에게 정보를 주고 받을 수 있도록 하는 파일.
+#pickle모듈을 이용해 객체를 주고 받을 수 있도록 했다.
+
+
 import socket
 import pickle
 import sys
