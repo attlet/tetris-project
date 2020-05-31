@@ -1,28 +1,26 @@
 import socket
 import pickle
+import sys
+
 
 class Network:
-
     def __init__(self):
-        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server = "192.168.219.148"
+        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #소켓 생성
+        self.server = "25.66.112.229"
         self.port = 5555
         self.addr = (self.server, self.port)
-        self.p = self.connect()
+        self.p = self.connect()  #서버에 연결하고 받은 정보를 저장
 
     def getp(self):
         return self.p
 
     def connect(self):
-        try:
-            self.client.connect(self.addr)
-            return self.client.recv(12000).decode()
-        except:
-            pass
+        self.client.connect(self.addr)
+        return pickle.loads(self.client.recv(2048*3))
 
     def send(self, data):
         try:
-            self.client.send(pickle.dumps(data))
-            return pickle.loads(self.client.recv(12000))
+            self.client.send(pickle.dumps(data))  #서버에 정보를 보내고 받은 정보 리턴
+            return pickle.loads(self.client.recv(2048*4))
         except socket.error as e:
             print(e)
