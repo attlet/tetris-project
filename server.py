@@ -5,61 +5,65 @@
 #reply가 상대방을 의미한다. reply객체를 상대에게 보냄으로써 상대의 상태를 화면에 그릴 수 있다.
 
 import socket
-from _thread import * #접속한 클라이언트마다 새로운 쓰레드 생성.
+from _thread import *
 import pickle
 from game import Player
 import pygame as pg
-
-port = 5555
-server = "25.66.112.229"
-
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #소켓 생성.
-
-try:
-    s.bind((server, port))  #소켓을 bind를 이용해 포트와 ip번호 튜플로 묶는다.
-except socket.error as e:
-    str(e)
-
-s.listen(2)  #2명까지 접속을 허용
-
-print("waiting for a connection....")
-
+from setting import *
 key_set = {'right': pg.K_RIGHT, 'left': pg.K_LEFT, 'up': pg.K_UP, 'down': pg.K_DOWN, 'drop': pg.K_SPACE}
-players = [Player('left', key_set), Player('right', key_set)]
+cur_player = 0
+players = [Player('left', key_set, True), Player('right', key_set, True)]
+port = 5555
+clock = pg.time.Clock()
 
 
-def thread_client(conn, player):  #스레드 생성
-    conn.send(pickle.dumps(players[player]))
-
+def thread_client(conn, player_num):                     #유저 한 명의 스레드 생성
+    global cur_player
+    players[player_num - 1].start_game()                 #유저가 2명인 지 확인
+    conn.send(pickle.dumps(players[player_num - 1]))
     while True:
         try:
-            data = pickle.loads(conn.recv(2048*3))
-            players[player] = data              #player번째 클라이언트가 받는 객체
-
+            data = pickle.loads(conn.recv(2048*3))       #데이터를 서버로부터 받음
+            players[player_num - 1] = data
             if not data:
                 print("disconnected")
                 break
             else:
-                if player == 1:
-                    reply = players[0]   #2번째 플레이어면 0번째 객체가 상대방
+                if player_num == 1:                      #reply는 상대방 객체를 뜻함
+                    reply = players[1]
                 else:
-                    reply = players[1]   #아닐시 1번째 객체가 상대방
+                    reply = players[0]
 
-                print("receiving", data)
-                print("sending", reply)  #서버와 통신이 되는 지 체크
-
-            conn.sendall(pickle.dumps(reply))  #상대방 정보를 보냄
+            conn.sendall(pickle.dumps(reply))            #reply를 서버로 보냄
         except:
             break
     print("lost connection")
+    cur_player -= 1
+    if player_num == 1:
+        players[player_num - 1] = Player('left', key_set, True)
+    elif player_num == 2:
+        players[player_num - 1] = Player('right', key_set, True)
     conn.close()
 
 
 if __name__ == "__main__":
-    cur_player = 0
-    while True:
-        conn, addr = s.accept()        #접속할 때 까지 기다린다.
-        print("Connected to:", addr)
+    server = str(input('서버 IP 입력 : '))                #ipv4를 입력해 서버에 접속한다.
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        start_new_thread(thread_client, (conn, cur_player)) #그 한 명의 스레드 함수 실행
-        cur_player += 1
+    try:
+        s.bind((server, port))
+    except socket.error as e:
+        str(e)
+
+    s.listen(2)                                          #2명까지 인원을 받음
+
+    print("waiting for a connection....")
+
+    connected = set()
+
+    while True:
+        while cur_player < 2:
+            conn, addr = s.accept()                      #서버에 누가 들어올때까지 대기
+            print("Connected to:", addr)
+            cur_player += 1
+            start_new_thread(thread_client, (conn, cur_player)) #스레드 시작

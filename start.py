@@ -2,37 +2,46 @@
 #p는 플레이어 한 명의 객체를 받아온다. 이를 움직이고 조작한 뒤 상대에게 그 정보를 보낸다.
 #상대는 그 정보를 받고 자신이 조작한 정보를 다시 서버로 보내 계속 주고 받는다.
 
-def online_play():
+def online_play(network):
     run = True
-    n = Network()
-    p = n.getp()    #플레이어 한 명 서버 연결
+    p1 = network.getp()          #서버에서 객체 하나 받아옴
     screen.fill(WHITE)
-    run_bgm(play_music)
     while run:
-        clock.tick(FPS)
-        p2 = n.send(p)  #상대방 플레이어 에게 p1의 객체를 넘긴다. p2는 reply객체를 받는다.
+        p2 = network.send(p1)    #상대방 객체정보를 받아옴
+
+        p1.init_attack_count()
+
+        if p2.attack_count != 0:
+            print(p2.attack_count)
+            p1.online_attacked(p2.attack_count)
+            p2.init_attack_count()
 
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 run = False
                 pg.display.quit()
                 quit()
-            p.key_input(event)
-            # p2.key_input(event)
+            if not p2.is_waiting():
+                p1.key_input(event)
 
-        p.move_piece()
-        # p2.move_piece()
-        p.fall_time_check()    #자신의 board에서 블럭을 움직이고 체크하는 것.
-        # p2.fall_time_check()
-        # p.draw_board()
-        redraw(screen, p, p2)  #p1 p2 둘 다 스크린에 그림.
-        # p2.draw_board()
+        if not p2.is_waiting():
+            p1.move_piece()
+            p1.fall_time_check()
+            p1.cal_attack_count()
+
+        p1.draw_board(screen)
+        p2.draw_board(screen)           #p1과 p2를 화면에 그림
         pg.display.update()
 
+        clock.tick(FPS)
         pg.display.flip()
-        if p.is_game_over() or p2.is_game_over():
+
+        if p1.is_game_over() or p2.is_game_over():
+            network.send(p1)
             run = False
             print("게임 오버 구현하기")
+
+
 
 
 
