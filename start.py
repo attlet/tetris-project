@@ -1,3 +1,5 @@
+
+#작성자: 2017038015신윤성
 #start파일에 포함되는 온라인 플레이 함수.
 #p는 플레이어 한 명의 객체를 받아온다. 이를 움직이고 조작한 뒤 상대에게 그 정보를 보낸다.
 #상대는 그 정보를 받고 자신이 조작한 정보를 다시 서버로 보내 계속 주고 받는다.
@@ -24,7 +26,7 @@ def online_play(network):
             if not p2.is_waiting():
                 p1.key_input(event)
 
-        if not p2.is_waiting():
+        if not p2.is_waiting():         #p2의 상황에 따라 움직임
             p1.move_piece()
             p1.fall_time_check()
             p1.cal_attack_count()
